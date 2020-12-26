@@ -46,6 +46,7 @@ class CPU:
         self.registers = [0] * NUM_REGISTERS
         self.stack = []
         self.input_buffer = ""
+        self.waiting_for_input = False
         self.debug = None
 
     def load_program(self, program):
@@ -269,8 +270,9 @@ class CPU:
                 #   safely read whole lines from the keyboard and
                 #   trust that they will be fully read
                 if len(self.input_buffer) == 0:
-                    self.input_buffer = input("> ")
-                    self.input_buffer += "\n"
+                    self.waiting_for_input = True
+                    break
+                self.waiting_for_input = False
                 reg = self.mem[self.pc+1] - 32768
                 self.registers[reg] = ord(self.input_buffer[0])
                 self.input_buffer = self.input_buffer[1:]

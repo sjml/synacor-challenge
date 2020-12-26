@@ -1,0 +1,2 @@
+move input to getch
+clean up machine implementation (register finding?)
