@@ -1,2 +1,3 @@
 move input to getch
 clean up machine implementation (register finding?)
+have error printing actually go to stderr
