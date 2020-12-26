@@ -45,6 +45,7 @@ class CPU:
         self.mem = [0] * MEMORY_SIZE
         self.registers = [0] * NUM_REGISTERS
         self.stack = []
+        self.input_buffer = ""
         self.debug = None
 
     def load_program(self, program):
@@ -260,8 +261,6 @@ class CPU:
                 print(chr(params[0]), end="")
                 self.pc += len(params)+1
             elif opcode == 20:
-                break
-                self.pc += len(params)+1
                 # in: 20 a
                 #   read a character from the terminal and write
                 #   its ascii code to <a>; it can be assumed that
@@ -269,6 +268,13 @@ class CPU:
                 #   newline is encountered; this means that you can
                 #   safely read whole lines from the keyboard and
                 #   trust that they will be fully read
+                if len(self.input_buffer) == 0:
+                    self.input_buffer = input("> ")
+                    self.input_buffer += "\n"
+                reg = self.mem[self.pc+1] - 32768
+                self.registers[reg] = ord(self.input_buffer[0])
+                self.input_buffer = self.input_buffer[1:]
+                self.pc += len(params)+1
             elif opcode == 21:
                 # noop: 21
                 #   no operation
