@@ -1,3 +1,4 @@
 clean up machine implementation (register finding?)
 have error printing actually go to stderr
 change bool sets to use int conversion instead of if
+make orb path print out actual directions
