@@ -8,10 +8,10 @@ from prompt_toolkit import Application
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.margins import ScrollbarMargin
-from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.buffer import Buffer, reshape_text
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout import Dimension, ScrollOffsets
-from prompt_toolkit.widgets import Label, TextArea
+from prompt_toolkit.widgets import Label, TextArea, Box
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.processors import TabsProcessor
@@ -39,38 +39,71 @@ shortcuts = {
     "l" : "look"
 }
 
+def help():
+    output = [
+        "All of this might break things.",
+        "-------------------------------------",
+        "\\save <name>: saves game to ",
+        "               ./saves/<name>.bin",
+        "\\load <name>: loads game from ",
+        "               ./saves/<name>.bin",
+        "\\mon: toggles memory monitoring",
+        "\\wmem <loc> <val>: writes memory",
+        "\\rmem <start> <end>: reads memory",
+        "\\dreg: dumps all register values",
+        "\\sreg <reg> <val>: sets a register",
+        "\\warp <loc>: warps around the world",
+        "\\dis <n>: disassemble the next <n>",
+        "           instructions to a file",
+        "           at ./disassembly.txt",
+        "\\disp <n>: disassemble and pause"
+        "            at the end of it",
+    ]
+    debug_text.buffer.text = "\n".join(output)
+
 def save(fname):
     if not os.path.exists("./saves"):
         os.mkdir("./saves")
     fpath = os.path.join("./saves", fname)
-    # print(f"Saving to {fpath}...")
+    debug_text.buffer.text = f"Saving to {fpath}..."
     with open(fpath, "wb") as save_file:
         computer.core_dump(save_file)
 
 def load(fname):
     fpath = os.path.join("./saves", fname)
-    # print(f"Loading from {fpath}...")
     if not os.path.exists(fpath):
-        # print("ERROR: No such file.")
+        debug_text.buffer.text = "\n".join(textwrap.wrap("ERROR: No such file.", 35))
         return
+    debug_text.buffer.text = f"Loading from {fpath}..."
     with open(fpath, "rb") as save_file:
         computer.load_core_dump(save_file)
 
+memory_monitor = False
+def mon():
+    global memory_monitor
+    memory_monitor = not memory_monitor
+
 def wmem(loc, val):
+    if (not loc.isdigit()) or (not val.isdigit()):
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be integers", 35))
+        return
+    if loc < 0 or val < 0 or loc > 32676 or val > 32676:
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be 15-bit uints.", 35))
+        return
     loc = int(loc)
     val = int(val)
-    # print("ERROR: Memory locations and values must be integers.")
     computer.mem[loc] = val
 
 def rmem(start, stop=None):
     if stop == None:
         stop = start
+    if (not start.isdigit()) or (not stop.isdigit()):
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be integers", 35))
+        return
     start = int(start)
     stop = int(stop)
-    # print("ERROR: Memory locations and values must be integers.")
     if stop < start:
         start, stop = stop, start
-        # print("ERROR: stop < start")
     out = ""
     while start <= stop:
         out += f"{start}: {computer.mem[start]}\n"
@@ -84,39 +117,43 @@ def dreg():
     debug_text.buffer.text = out
 
 def sreg(reg, val):
+    if (not reg.isdigit()) or (not val.isdigit()):
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Register indices and values must be integers", 35))
+        return
     reg = int(reg)
     val = int(val)
-    # print("ERROR: Register indices and values must be integers.")
     if reg < 0 or reg >= len(computer.registers):
-        # print("ERROR: Invalid register index.")
+        debug_text.buffer.text = "\n".join(textwrap.wrap("ERROR: Invalid register index.", 35))
         return
+    if val <0 or val > 32767:
+        debug_text.buffer.text = "\n".join(textwrap.wrap("ERROR: Registers hold 15-bit uints.", 35))
+        return
+
     computer.registers[reg] = val
     dreg()
 
 def warp(loc_idx):
+    if not loc_idx.isdigit():
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Warp locations must be integers", 35))
+        return
     loc_idx = int(loc_idx)
-    # print("ERROR: Memory locations and values must be integers.")
     computer.mem[2732] = loc_idx
     computer.mem[2733] = loc_idx
 
-def rep(count, *commands):
-    count = int(count)
-    cmd_str = " ".join(commands)
-    cmds = cmd_str.split(" | ")
-    out = "\n".join(cmds) + "\n"
-    out *= count
-    return out
-
 # disassemble the next N instructions
 def dis(count):
+    if not count.isdigit():
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Disassembly count must be integer", 35))
+        return
     count = int(count)
-    # print("ERROR: Disassembly count must be integer.")
     computer.dissassembly_count = count
 
 # disassemble the next N instructions and then pause
 def disp(count):
+    if not count.isdigit():
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Disassembly count must be integer", 35))
+        return
     count = int(count)
-    # print("ERROR: Disassembly count must be integer.")
     computer.dissassembly_count = count
     computer.ticks = count
 
@@ -129,7 +166,7 @@ def pre_parse(cmd):
             f(*parts[1:])
             return None
         else:
-            debug_text.buffer.text = f"ERROR: No such command '{parts[0]}'"
+            debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: No such command '{parts[0]}'", 35))
             return None
 
     if parts[0] in shortcuts.keys():
@@ -141,11 +178,15 @@ def pre_parse(cmd):
         cmd += "\n"
     return cmd
 
+raw_output = ""
 class UIPrinter:
-    def __init__(self, target):
+    def __init__(self, target: Buffer, win: Window):
         self.target = target
+        self.win = win
 
     def accept_output(self, val):
+        global raw_output
+        raw_output += chr(val)
         self.target.text += chr(val)
         self.target.cursor_position = len(self.target.text)
 
@@ -186,8 +227,18 @@ def format_diffs(hist, idx1, idx2, regs=False, mem=True):
                 out += "\n"
     return out
 
+def wrap_output():
+    _, width = os.popen("stty size", "r").read().split()
+    width = int(width) - 43
+    formed = ["\n".join(textwrap.wrap(l, width)) for l in raw_output.splitlines()]
+    output_buffer.text = "\n".join(formed)
+
 def inp_handler(buff):
-    output_buffer.text += f"> {buff.text}\n\n"
+    global raw_output
+
+    if not buff.text.startswith("\\"):
+        raw_output += f"> {buff.text}\n\n"
+        output_buffer.text += f"> {buff.text}\n\n"
 
     inp = pre_parse(buff.text)
 
@@ -195,25 +246,29 @@ def inp_handler(buff):
         cmd_history.append(inp.strip())
         computer.input_buffer = inp
         computer.run()
+
+        wrap_output()
+
         state_stack.append({
             "history": cmd_history.copy(),
             "registers": computer.registers.copy(),
             "memory": computer.mem.copy()
         })
-        fdiffs = format_diffs(state_stack, -2, -1)
-        debug_text.buffer.text = fdiffs
+        if memory_monitor:
+            fdiffs = format_diffs(state_stack, -2, -1)
+            debug_text.buffer.text = fdiffs
         if not computer.waiting_for_input:
             output_buffer.text += "\n\n[Game exited]\n"
             output_buffer.cursor_position = len(output_buffer.text)
 
 output_buffer = Buffer("")
 output_window = Window(
-    BufferControl(buffer=output_buffer),
+    BufferControl(buffer=output_buffer, input_processors=[]),
 
     wrap_lines=True,
     right_margins=[ScrollbarMargin()],
     always_hide_cursor=True,
-    allow_scroll_beyond_bottom=True
+    allow_scroll_beyond_bottom=True,
 )
 
 prompt_history = InMemoryHistory()
@@ -231,7 +286,7 @@ root = VSplit(
             padding_char="-", padding=1,
 
         ),
-        Window(content=debug_text, width=Dimension(min=40, max=40)),
+        Box(body=Window(content=debug_text, wrap_lines=True), width=Dimension(min=40, max=40), padding_left=1, padding_top=0, padding_bottom=0, padding_right=1),
     ],
     padding_char="‖", padding=1
 )
@@ -260,7 +315,7 @@ computer = machine.CPU()
 
 # load up machine after self-tests done
 computer.load_core_dump(open("./saves/start", "rb"))
-computer.stdout = UIPrinter(output_buffer)
+computer.stdout = UIPrinter(output_buffer, output_window)
 
 cmd_history = []
 state_stack = []
@@ -271,6 +326,9 @@ state_stack.append({
 })
 
 computer.run()
+
+debug_text.buffer.text = "Controls:\n\nType things and hit return.\n\nShift+Up/Down scrolls the output \nwindow.\n\nUse \\help to see meta commands."
+wrap_output()
 
 root_layout.focus(input_prompt)
 app = Application(layout=root_layout, key_bindings=kb, full_screen=True)
