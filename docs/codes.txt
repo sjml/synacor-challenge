@@ -2,3 +2,7 @@ arch-spec: DyNkvehMDqdg
 Initial boot: xrKyEzPZskGJ
 Self-tests complete: rXFEImhJbOOc
 In-game tablet: XWQwbJFwCOBP
+Dark caverns: KUrLxAYeFBnS
+Teleporter to HQ: NiFgxgHgHOLG
+Teleporter to Island: ??
+Mirror: TUlqxATWHIw8

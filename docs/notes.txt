@@ -1,3 +1,85 @@
 Memory:
     2732: current location
     2733: mirrors location?
+        - becomes 0 on death
+    3726: ?? (changed when I was roaming the passages)
+        - grue location?!
+        -- 24 to 88 when I found the code
+    2674: changed from 0 to 32767 when I hit "fumbling"
+    2682: from 32767 to 0 when I lit the lantern
+        - 2678 did the opposite
+        - 25974 went 7 to 0
+        - 25978 went 3 to 7
+    2462:
+        - solving coin puzzle went 4->5
+    2694:
+        - solving coin puzzle went 0->maxint
+
+Orb memory:
+    stepping east (minus) from start
+        3951: current operation
+            - add = 0
+            - sub = 1
+            - mult = 2
+        3952: orb weight
+        3953: counting my moves
+        3954: 1
+        3955: 12
+        3956: 144
+        3957: 81
+        3958: 2
+
+
+
+Locations:
+    Foothills start: 2317
+    Foothills south: 2322
+    Dark cave (doorway): 2327
+    Dark cave (north of doorway): 2332
+    Dark cave (leading to bridge): 2337
+    Rope bridge: 2342
+    Falling: 2347
+    Moss cavern: 2352
+    Moss cavern (east, lantern): 2357
+    Moss cavern (west, crevise): 2362
+    Passage: 2367
+    Twisty passages (ladder): 2377
+    Twisty passages (east, grue): 2392
+    Twisty passage (west from ladder): 2397
+    Twisty passage (west+south from ladder): 2402
+    Twisty passage (s+w+s): 2382
+    Fumbling around in the darkness: 2648
+        - back: 2653
+            - run: 2658
+    Ruins: 2447
+        - Foyer: 2452
+        - Hall: 2457
+
+    warped:
+        Teleporter: 2463
+        Vault antechamber: 2623
+        Vault: 2643
+
+    Synacor HQ: 2488
+
+
+
+Inventory:
+    when mem locations are 0, I'm carrying it
+    otherwise they are the object's location
+    2670: tablet
+    2674: empty lantern
+    2678: [0 when lantern is empty, max int when lit]
+    2682: [max int when off, 0 when lit?]
+    2686: oil can
+    2690: red coin (2 dots)
+    2694: corroded coin (triangle)
+    2698: shiny coin (pentagon)
+    2702: concave coin (7 dots)
+    2706: blue coin (9 dots)
+    2710: teleporter
+    2714: business card
+    2718: orb
+    2722: mirror
+    2726: strange book
+    2730: journal
