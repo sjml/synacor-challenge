@@ -246,19 +246,13 @@ class CPU:
                 # eq: 4 a b c
                 #   set <a> to 1 if <b> is equal to <c>; set it
                 #   to 0 otherwise
-                if params[1] == params[2]:
-                    self.set_register(self.mem[self.pc+1], 1)
-                else:
-                    self.set_register(self.mem[self.pc+1], 0)
+                self.set_register(self.mem[self.pc+1], int(params[1] == params[2]))
                 self.pc += len(params)+1
             elif opcode == 5:
                 # gt: 5 a b c
                 #   set <a> to 1 if <b> is greater than <c>; set
                 #   it to 0 otherwise
-                if params[1] > params[2]:
-                    self.set_register(self.mem[self.pc+1], 1)
-                else:
-                    self.set_register(self.mem[self.pc+1], 0)
+                self.set_register(self.mem[self.pc+1], int(params[1] > params[2]))
                 self.pc += len(params)+1
             elif opcode == 6:
                 # jmp: 6 a

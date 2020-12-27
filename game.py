@@ -27,7 +27,6 @@ from prompt_toolkit.key_binding.bindings.scroll import (
 )
 
 import machine
-from explorer import diff_mem, format_diffs
 
 shortcuts = {
     "n" : "north",
@@ -149,6 +148,43 @@ class UIPrinter:
     def accept_output(self, val):
         self.target.text += chr(val)
         self.target.cursor_position = len(self.target.text)
+
+def diff_mem(mem1, mem2):
+    diffs = []
+    if len(mem1) != len(mem2):
+        print(f"WARNING: Memory not the same size. ({len(mem1)} vs {len(mem2)}) Diffs will be null.")
+        return diffs
+    for mi in range(len(mem1)):
+        if mem1[mi] == mem2[mi]:
+            continue
+        diffs.append((mi, mem1[mi], mem2[mi]))
+    return diffs
+
+def format_diffs(hist, idx1, idx2, regs=False, mem=True):
+    out = ""
+    m1 = hist[idx1]
+    m2 = hist[idx2]
+    reg_diffs = diff_mem(m1["registers"], m2["registers"])
+    mem_diffs = diff_mem(m1["memory"], m2["memory"])
+    out += f"'{m2['history'][-1]}' changes:\n"
+    if regs:
+        if len(reg_diffs) == 0:
+            out += "\tregisters: [none]\n"
+        else:
+            out += "\tregisters:\n"
+            for rd in reg_diffs:
+                out += f"\t\t{rd[0]}: {rd[1]}\t->\t{rd[2]}\n"
+    if mem:
+        if len(mem_diffs) == 0:
+            out += "\tmemory: [none]\n"
+        else:
+            out += "\tmemory:\n"
+            for md in mem_diffs:
+                out += f"\t\t{md[0]}: {md[1]}\t->\t{md[2]}"
+                if md[2] >= 32 and md[2] < 127:
+                    out += f"\t({chr(md[2])})"
+                out += "\n"
+    return out
 
 def inp_handler(buff):
     output_buffer.text += f"> {buff.text}\n\n"
