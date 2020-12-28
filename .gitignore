@@ -1,4 +1,5 @@
 __pycache__
 env/*
+build/*
 
 # bin files are actually worth saving

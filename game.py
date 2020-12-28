@@ -26,6 +26,7 @@ from prompt_toolkit.key_binding.bindings.scroll import (
     scroll_page_up,
 )
 
+import datafiles
 import machine
 
 shortcuts = {
@@ -85,23 +86,26 @@ def mon():
 
 def wmem(loc, val):
     if (not loc.isdigit()) or (not val.isdigit()):
-        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be integers", 35))
-        return
-    if loc < 0 or val < 0 or loc > 32676 or val > 32676:
-        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be 15-bit uints.", 35))
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be 15-bit uints", 35))
         return
     loc = int(loc)
     val = int(val)
+    if loc < 0 or val < 0 or loc > 32676 or val > 32676:
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be 15-bit uints.", 35))
+        return
     computer.mem[loc] = val
 
 def rmem(start, stop=None):
     if stop == None:
         stop = start
     if (not start.isdigit()) or (not stop.isdigit()):
-        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be integers", 35))
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations must be 15-bit uints", 35))
         return
     start = int(start)
     stop = int(stop)
+    if start < 0 or stop < 0 or start > 32676 or stop > 32676:
+        debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations must be 15-bit uints", 35))
+        return
     if stop < start:
         start, stop = stop, start
     out = ""
@@ -298,13 +302,13 @@ kb = KeyBindings()
 def exit_(event):
     event.app.exit()
 
-@kb.add('s-up')
+@kb.add('c-w')
 def output_up_(event):
     root_layout.focus(output_buffer)
     scroll_half_page_up(event)
     root_layout.focus(input_prompt)
 
-@kb.add('s-down')
+@kb.add('c-s')
 def output_up_(event):
     root_layout.focus(output_buffer)
     scroll_half_page_down(event)
@@ -314,7 +318,7 @@ def output_up_(event):
 computer = machine.CPU()
 
 # load up machine after self-tests done
-computer.load_core_dump(open("./saves/start", "rb"))
+computer.load_core_dump(datafiles.get("start.sav"))
 computer.stdout = UIPrinter(output_buffer, output_window)
 
 cmd_history = []
@@ -327,7 +331,7 @@ state_stack.append({
 
 computer.run()
 
-debug_text.buffer.text = "Controls:\n\nType things and hit return.\n\nShift+Up/Down scrolls the output \nwindow.\n\nUse \\help to see meta commands."
+debug_text.buffer.text = "Controls:\n\nType things and hit return.\n\Ctrl+W/S scrolls the output \nwindow.\n\nCtrl-D to quit.\n\nUse \\help to see meta commands."
 wrap_output()
 
 root_layout.focus(input_prompt)
