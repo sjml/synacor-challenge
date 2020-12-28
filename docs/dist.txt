@@ -1,0 +1,5 @@
+## Synacor Challenge
+
+A rough-but-working Python implementation of the [Synacor Challenge](https://challenge.synacor.com/). Starts after you've obtained the third code, but you can run with `--run-self-test` if you really want to see the prior steps.
+
+[Source and notes on GitHub](https://github.com/sjml/synacor-challenge).

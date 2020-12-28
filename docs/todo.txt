@@ -1,4 +1,2 @@
-clean up machine implementation (register finding?)
-have error printing actually go to stderr
-change bool sets to use int conversion instead of if
-make orb path print out actual directions
+* make orb path print out actual directions
+* figure out prompt-toolkit focus so it's easier to scroll the various panes

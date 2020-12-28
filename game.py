@@ -94,6 +94,7 @@ def wmem(loc, val):
         debug_text.buffer.text = "\n".join(textwrap.wrap(f"ERROR: Memory locations and values must be 15-bit uints.", 35))
         return
     computer.mem[loc] = val
+    rmem(str(loc))
 
 def rmem(start, stop=None):
     if stop == None:
@@ -317,8 +318,12 @@ def output_up_(event):
 
 computer = machine.CPU()
 
-# load up machine after self-tests done
-computer.load_core_dump(datafiles.get("start.sav"))
+if "--run-self-test" not in sys.argv:
+    # load up machine after self-tests done
+    computer.load_core_dump(datafiles.get("start.sav"))
+else:
+    program = machine.CPU.read_program_from_bin(datafiles.get("challenge.bin"))
+    computer.load_program(program)
 computer.stdout = UIPrinter(output_buffer, output_window)
 
 cmd_history = []
@@ -331,7 +336,7 @@ state_stack.append({
 
 computer.run()
 
-debug_text.buffer.text = "Controls:\n\nType things and hit return.\n\Ctrl+W/S scrolls the output \nwindow.\n\nCtrl-D to quit.\n\nUse \\help to see meta commands."
+debug_text.buffer.text = "Controls:\n\nType things and hit return.\n\nCtrl+W/S scrolls the output \nwindow.\n\nCtrl-D to quit.\n\nUse \\help to see meta commands."
 wrap_output()
 
 root_layout.focus(input_prompt)
